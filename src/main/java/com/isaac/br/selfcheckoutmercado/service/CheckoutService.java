@@ -6,5 +6,6 @@ import com.isaac.br.selfcheckoutmercado.dto.CheckoutResponseDTO;
 public interface CheckoutService {
 
     CheckoutResponseDTO createCheckout();
+    void cancelCheckout(long checkoutId);
 
 }
