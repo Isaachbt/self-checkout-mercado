@@ -23,4 +23,10 @@ public class CheckoutSession {
     private LocalDateTime creatAt;
     @Column(nullable = false)
     private double totalAmount;
+
+    public CheckoutSession(Status status, LocalDateTime creatAt, double totalAmount) {
+        this.status = status;
+        this.creatAt = creatAt;
+        this.totalAmount = totalAmount;
+    }
 }
