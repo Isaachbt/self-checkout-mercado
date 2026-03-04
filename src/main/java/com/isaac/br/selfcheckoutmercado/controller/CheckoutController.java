@@ -8,18 +8,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/checkout/")
+@RequestMapping("api/")
 public class CheckoutController {
 
     @Autowired
     private CheckoutService checkoutService;
 
-    @PostMapping("sessions")
+    @PostMapping("checkout/sessions")
     public ResponseEntity<CheckoutResponseDTO> createSession(){
         return ResponseEntity.ok(checkoutService.createCheckout());
     }
 
-    @PostMapping("sessions/{id}/cancel")
+    @PostMapping("checkout/sessions/{id}/cancel")
     public ResponseEntity<Object> cancelSession(@PathVariable("id") long checkoutId){
         checkoutService.cancelCheckout(checkoutId);
         return ResponseEntity.status(HttpStatus.OK).body("Volte sempre.");
