@@ -2,6 +2,7 @@ package com.isaac.br.selfcheckoutmercado.model;
 
 import com.isaac.br.selfcheckoutmercado.enums.Status;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,6 +10,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@AllArgsConstructor
 @Entity
 @Table(name = "CheckoutSession")
 public class CheckoutSession {
@@ -28,5 +30,9 @@ public class CheckoutSession {
         this.status = status;
         this.creatAt = creatAt;
         this.totalAmount = totalAmount;
+    }
+
+    public CheckoutSession() {
+
     }
 }
