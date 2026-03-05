@@ -89,13 +89,16 @@ public class CheckoutServiceImp implements CheckoutService {
     }
 
     @Override
-    public void removeItemFromCart(long id,long idSession,long productId) {
+    public void removeItemFromCart(long idCart,long idSession,long productId) {
+        Product product = productService.getProduct(productId);
         var checkout = getSessionById(idSession);
-        try {
-            cartItemService.getItemById(id, checkout.getId(), productId);
-        }catch (Exception e){
-            throw new RuntimeException("Erro ao deletar item");
-        }
+        var car = cartItemService.getItemById(idCart, checkout.getId(), product);
+        double sessionAmount = checkout.getTotalAmount() - (product.getPrice() * car.getQuantity());
+        checkout.setTotalAmount(sessionAmount);
+        cartItemService.deleteCartItem(car);
+        sessionRepository.save(checkout);
+
+
 
     }
 

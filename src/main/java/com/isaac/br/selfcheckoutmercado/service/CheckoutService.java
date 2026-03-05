@@ -10,6 +10,6 @@ public interface CheckoutService {
     CheckoutResponseDTO createCheckout();
     void cancelCheckout(long checkoutId);
     ResponseCartItem addItemToCart(Long idSession, CartItemDTO dto);
-    void removeItemFromCart(long id,long idSession,long productId);
+    void removeItemFromCart(long idCart,long idSession,long productId);
     CheckoutSession getSessionById(Long idSession);
 }

@@ -32,6 +32,15 @@ public class CheckoutController {
         return  ResponseEntity.ok(checkoutService.addItemToCart(checkoutId, item));
     }
 
+    @PostMapping("checkout/session/{id}/{idSession}/{idProduct}/remove-items")
+    public ResponseEntity<Void> removeItemFromCart(@PathVariable("id") long id,
+                                                   @PathVariable("idSession") long idSession,
+                                                   @PathVariable("idProduct") long idProduct){
+        checkoutService.removeItemFromCart(id,idSession,idProduct);
+        return ResponseEntity.ok().build();
+
+    }
+
 
 
 }
