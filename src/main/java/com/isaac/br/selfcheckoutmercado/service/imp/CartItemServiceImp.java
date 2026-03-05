@@ -2,6 +2,7 @@ package com.isaac.br.selfcheckoutmercado.service.imp;
 
 import com.isaac.br.selfcheckoutmercado.exceptions.NotFoundException;
 import com.isaac.br.selfcheckoutmercado.model.CartItem;
+import com.isaac.br.selfcheckoutmercado.model.Product;
 import com.isaac.br.selfcheckoutmercado.repository.CartItemRepository;
 import com.isaac.br.selfcheckoutmercado.service.CartItemService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,11 +28,19 @@ public class CartItemServiceImp implements CartItemService {
     }
 
     @Override
-    public void getItemById(long sessionId,long id, long productId) {
+    public CartItem getItemById(long id,long sessionId, Product productId) {
         Optional<CartItem> cartItem = cartItemRepository.findByIdAndSessionIdAndProductId(id,sessionId,productId);
         if (cartItem.isEmpty()){
             throw new NotFoundException("CartItem not found");
         }
-        cartItemRepository.delete(cartItem.get());
+        return cartItem.get();
     }
+
+    @Override
+    public void deleteCartItem(CartItem cartItem) {
+        cartItemRepository.delete(cartItem);
+
+    }
+
+
 }
