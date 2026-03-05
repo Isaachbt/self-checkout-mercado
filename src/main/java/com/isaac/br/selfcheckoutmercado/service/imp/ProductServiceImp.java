@@ -23,4 +23,13 @@ public class ProductServiceImp implements ProductService {
         }
         return optional.get();
     }
+
+    @Override
+    public Product getProduct(long id) {
+        Optional<Product> product = productRepository.findById(Math.toIntExact(id));
+        if (product.isEmpty()) {
+            throw new NotFoundException("Item not found.");
+        }
+        return product.get();
+    }
 }
