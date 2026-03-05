@@ -8,4 +8,5 @@ public interface CartItemService {
 
     List<CartItem> getAllCartItems();
     void saveCartItem(CartItem cartItem);
+    void getItemById(long sessionId,long id,long productId);
 }
