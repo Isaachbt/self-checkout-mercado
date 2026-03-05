@@ -5,4 +5,5 @@ import com.isaac.br.selfcheckoutmercado.model.Product;
 public interface ProductService {
 
     Product getBarCode(String barCode);
+    Product getProduct(long id);
 }
