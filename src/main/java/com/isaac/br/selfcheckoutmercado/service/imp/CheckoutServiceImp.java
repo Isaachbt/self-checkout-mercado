@@ -62,10 +62,7 @@ public class CheckoutServiceImp implements CheckoutService {
 
     @Override
     public ResponseCartItem addItemToCart(Long idSession, CartItemDTO dto) {
-        Optional<CheckoutSession> checkoutSession = sessionRepository.findById(Math.toIntExact(idSession));
-        if(checkoutSession.isEmpty()){
-            throw new NotFoundException("It was not possible to find checkout");
-        }
+        var checkoutSession = getSessionById(idSession);
         Product product = productService.getBarCode(dto.barcode());
         double calc = 0;
         if (dto.weight() != 0){
@@ -74,20 +71,40 @@ public class CheckoutServiceImp implements CheckoutService {
             calc = dto.quantity() * product.getPrice();
         }
 
-        double calcAmount = checkoutSession.get().getTotalAmount() + calc;
-        checkoutSession.get().setTotalAmount(calcAmount);
+        double calcAmount = checkoutSession.getTotalAmount() + calc;
+        checkoutSession.setTotalAmount(calcAmount);
         CartItem cartItem = new CartItem();
         cartItem.setQuantity(dto.quantity());
         cartItem.setSubtotal(calcAmount);
-        cartItem.setSessionId(checkoutSession.get().getId());
+        cartItem.setSessionId(checkoutSession.getId());
         cartItem.setProductId(product);
         try {
-            sessionRepository.save(checkoutSession.get());
+            sessionRepository.save(checkoutSession);
             cartItemService.saveCartItem(cartItem);
             return new ResponseCartItem(product.getId(),product.getName(), calc,calcAmount);
 
         }catch (Exception e){
             throw new RuntimeException("Erro ao salvar checkout");
         }
+    }
+
+    @Override
+    public void removeItemFromCart(long id,long idSession,long productId) {
+        var checkout = getSessionById(idSession);
+        try {
+            cartItemService.getItemById(id, checkout.getId(), productId);
+        }catch (Exception e){
+            throw new RuntimeException("Erro ao deletar item");
+        }
+
+    }
+
+    @Override
+    public CheckoutSession getSessionById(Long idSession) {
+        Optional<CheckoutSession> checkoutSession = sessionRepository.findById(Math.toIntExact(idSession));
+        if(checkoutSession.isEmpty()){
+            throw new NotFoundException("It was not possible to find checkout");
+        }
+        return checkoutSession.get();
     }
 }
