@@ -1,9 +1,11 @@
 package com.isaac.br.selfcheckoutmercado.service.imp;
 
+import com.isaac.br.selfcheckoutmercado.config.AuthFacade;
 import com.isaac.br.selfcheckoutmercado.dto.CartItemDTO;
 import com.isaac.br.selfcheckoutmercado.dto.CheckoutResponseDTO;
 import com.isaac.br.selfcheckoutmercado.dto.ResponseCartItem;
 import com.isaac.br.selfcheckoutmercado.enums.Status;
+import com.isaac.br.selfcheckoutmercado.exceptions.NegadoException;
 import com.isaac.br.selfcheckoutmercado.exceptions.NotFoundException;
 import com.isaac.br.selfcheckoutmercado.model.CartItem;
 import com.isaac.br.selfcheckoutmercado.model.CheckoutSession;
@@ -30,6 +32,12 @@ public class CheckoutServiceImp implements CheckoutService {
     @Autowired
     private CartItemService cartItemService;
 
+    @Autowired
+    private AudiService audiService;
+
+    @Autowired
+    private AuthFacade authFacade;
+
     @Override
     public CheckoutResponseDTO createCheckout() {
 
@@ -49,12 +57,11 @@ public class CheckoutServiceImp implements CheckoutService {
 
     @Override
     public void cancelCheckout(long checkoutId) {
-        Optional<CheckoutSession> session = sessionRepository.findById((int) checkoutId);
-        if(session.isEmpty()){
-            throw new NotFoundException("Não encontrado");
-        }
+        CheckoutSession session = getSessionById(checkoutId);
+        session.setStatus(Status.CANCELLED);
         try {
-            sessionRepository.delete(session.get());
+            sessionRepository.delete(session);
+            audiService.log(authFacade.getEmployeeId(),authFacade.getTerminalId(),"CANCELLED");
         }catch (Exception e){
             throw new RuntimeException("Erro ao deletar checkout");
         }
@@ -75,7 +82,7 @@ public class CheckoutServiceImp implements CheckoutService {
         checkoutSession.setTotalAmount(calcAmount);
         CartItem cartItem = new CartItem();
         cartItem.setQuantity(dto.quantity());
-        cartItem.setSubtotal(calcAmount);
+        cartItem.setSubtotal((product.getPrice()*dto.quantity()));
         cartItem.setSessionId(checkoutSession.getId());
         cartItem.setProductId(product);
         try {
@@ -104,10 +111,13 @@ public class CheckoutServiceImp implements CheckoutService {
 
     @Override
     public CheckoutSession getSessionById(Long idSession) {
-        Optional<CheckoutSession> checkoutSession = sessionRepository.findById(Math.toIntExact(idSession));
-        if(checkoutSession.isEmpty()){
-            throw new NotFoundException("It was not possible to find checkout");
+        CheckoutSession checkoutSession = sessionRepository.findById(Math.toIntExact(idSession))
+                .orElseThrow(() -> new NotFoundException("Session not found"));
+
+        if (!checkoutSession.getStatus().equals(Status.OPEN)) {
+            throw new NegadoException("Session closed");
         }
-        return checkoutSession.get();
+
+        return checkoutSession;
     }
 }
