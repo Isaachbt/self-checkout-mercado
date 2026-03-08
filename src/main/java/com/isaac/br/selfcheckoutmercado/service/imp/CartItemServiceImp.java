@@ -1,5 +1,6 @@
 package com.isaac.br.selfcheckoutmercado.service.imp;
 
+import com.isaac.br.selfcheckoutmercado.exceptions.InternalServerException;
 import com.isaac.br.selfcheckoutmercado.exceptions.NotFoundException;
 import com.isaac.br.selfcheckoutmercado.model.CartItem;
 import com.isaac.br.selfcheckoutmercado.model.Product;
@@ -24,7 +25,12 @@ public class CartItemServiceImp implements CartItemService {
 
     @Override
     public void saveCartItem(CartItem cartItem) {
-        cartItemRepository.save(cartItem);
+        try {
+            cartItemRepository.save(cartItem);
+        }catch (Exception e){
+            throw new InternalServerException("Erro ao salvar cartItem");
+        }
+
     }
 
     @Override
@@ -38,9 +44,17 @@ public class CartItemServiceImp implements CartItemService {
 
     @Override
     public void deleteCartItem(CartItem cartItem) {
-        cartItemRepository.delete(cartItem);
+        try {
+            cartItemRepository.delete(cartItem);
+        }catch (Exception e){
+            throw new NotFoundException("Erro ao deletar cartItem");
+        }
 
     }
 
+    @Override
+    public List<CartItem> findBySessionId(long sessionId) {
+        return cartItemRepository.findBySessionId(sessionId);
+    }
 
 }
