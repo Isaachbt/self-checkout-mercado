@@ -15,7 +15,7 @@ public class Terminal {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-    @Column(name = "terminal_code")
+    @Column(name = "terminal_code",unique = true)
     private String terminalCode;
     private boolean active;
 }

@@ -21,7 +21,7 @@ public class Product {
     private Long id;
     @Column(nullable = false)
     private String name;
-    @Column(nullable = false)
+    @Column(name = "bar_code", nullable = false, unique = true)
     private String barCode;
     @Column(nullable = false)
     private double price;
