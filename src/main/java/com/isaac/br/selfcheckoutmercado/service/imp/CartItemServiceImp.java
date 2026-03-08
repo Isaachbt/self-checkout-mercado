@@ -42,5 +42,9 @@ public class CartItemServiceImp implements CartItemService {
 
     }
 
+    @Override
+    public List<CartItem> findBySessionId(long sessionId) {
+        return cartItemRepository.findBySessionId(sessionId);
+    }
 
 }
