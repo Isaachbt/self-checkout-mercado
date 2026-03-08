@@ -5,8 +5,10 @@ import com.isaac.br.selfcheckoutmercado.dto.CartItemDTO;
 import com.isaac.br.selfcheckoutmercado.dto.CheckoutResponseDTO;
 import com.isaac.br.selfcheckoutmercado.dto.ResponseCartItem;
 import com.isaac.br.selfcheckoutmercado.enums.Status;
+import com.isaac.br.selfcheckoutmercado.exceptions.CartAllItemsException;
 import com.isaac.br.selfcheckoutmercado.exceptions.NegadoException;
 import com.isaac.br.selfcheckoutmercado.exceptions.NotFoundException;
+import com.isaac.br.selfcheckoutmercado.exceptions.QuantityInvalidException;
 import com.isaac.br.selfcheckoutmercado.model.CartItem;
 import com.isaac.br.selfcheckoutmercado.model.CheckoutSession;
 import com.isaac.br.selfcheckoutmercado.model.Product;
@@ -17,8 +19,8 @@ import com.isaac.br.selfcheckoutmercado.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Service
 public class CheckoutServiceImp implements CheckoutService {
@@ -57,6 +59,11 @@ public class CheckoutServiceImp implements CheckoutService {
 
     @Override
     public void cancelCheckout(long checkoutId) {
+
+        if (!cartItemService.findBySessionId(checkoutId).isEmpty()) {
+            throw new CartAllItemsException("Impossivel cancelar a checkout");
+        }
+
         CheckoutSession session = getSessionById(checkoutId);
         session.setStatus(Status.CANCELLED);
         try {
@@ -71,24 +78,34 @@ public class CheckoutServiceImp implements CheckoutService {
     public ResponseCartItem addItemToCart(Long idSession, CartItemDTO dto) {
         var checkoutSession = getSessionById(idSession);
         Product product = productService.getBarCode(dto.barcode());
-        double calc = 0;
+        CartItem cartItem = new CartItem();
+        double subTotal;
+
         if (dto.weight() != 0){
-            calc = dto.weight() * product.getPrice();
+            BigDecimal pesoKg = new BigDecimal(dto.weight()).divide(new BigDecimal(1000));
+            BigDecimal total = pesoKg.multiply(BigDecimal.valueOf(product.getPrice()));
+            cartItem.setWeight(pesoKg.doubleValue());
+            subTotal = total.doubleValue();
         }else{
-            calc = dto.quantity() * product.getPrice();
+
+            if (dto.quantity() == 0){
+            throw new QuantityInvalidException("Quantity invalid");
+            }
+
+            subTotal = dto.quantity() * product.getPrice();
+            cartItem.setQuantity(dto.quantity());
         }
 
-        double calcAmount = checkoutSession.getTotalAmount() + calc;
-        checkoutSession.setTotalAmount(calcAmount);
-        CartItem cartItem = new CartItem();
-        cartItem.setQuantity(dto.quantity());
-        cartItem.setSubtotal((product.getPrice()*dto.quantity()));
+        cartItem.setSubtotal(subTotal);
+        BigDecimal calcAmount = BigDecimal.valueOf(checkoutSession.getTotalAmount()).add(BigDecimal.valueOf(subTotal));
+
+        checkoutSession.setTotalAmount(calcAmount.doubleValue());
         cartItem.setSessionId(checkoutSession.getId());
         cartItem.setProductId(product);
         try {
             sessionRepository.save(checkoutSession);
             cartItemService.saveCartItem(cartItem);
-            return new ResponseCartItem(product.getId(),product.getName(), calc,calcAmount);
+            return new ResponseCartItem(product.getId(),product.getName(), subTotal,calcAmount.doubleValue());
 
         }catch (Exception e){
             throw new RuntimeException("Erro ao salvar checkout");
