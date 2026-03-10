@@ -5,10 +5,7 @@ import com.isaac.br.selfcheckoutmercado.dto.CartItemDTO;
 import com.isaac.br.selfcheckoutmercado.dto.CheckoutResponseDTO;
 import com.isaac.br.selfcheckoutmercado.dto.ResponseCartItem;
 import com.isaac.br.selfcheckoutmercado.enums.Status;
-import com.isaac.br.selfcheckoutmercado.exceptions.CartAllItemsException;
-import com.isaac.br.selfcheckoutmercado.exceptions.NegadoException;
-import com.isaac.br.selfcheckoutmercado.exceptions.NotFoundException;
-import com.isaac.br.selfcheckoutmercado.exceptions.QuantityInvalidException;
+import com.isaac.br.selfcheckoutmercado.exceptions.*;
 import com.isaac.br.selfcheckoutmercado.model.CartItem;
 import com.isaac.br.selfcheckoutmercado.model.CheckoutSession;
 import com.isaac.br.selfcheckoutmercado.model.Product;
@@ -53,7 +50,7 @@ public class CheckoutServiceImp implements CheckoutService {
                     session.getTotalAmount());
 
         }catch (Exception e){
-            throw new RuntimeException("Erro ao salvar checkout");
+            throw new InternalServerException("Erro ao iniciar checkout");
         }
     }
 
@@ -70,7 +67,7 @@ public class CheckoutServiceImp implements CheckoutService {
             sessionRepository.delete(session);
             audiService.log(authFacade.getEmployeeId(),authFacade.getTerminalId(),"CANCELLED");
         }catch (Exception e){
-            throw new RuntimeException("Erro ao deletar checkout");
+            throw new InternalServerException("Erro ao deletar checkout");
         }
     }
 
@@ -108,7 +105,7 @@ public class CheckoutServiceImp implements CheckoutService {
             return new ResponseCartItem(product.getId(),product.getName(), subTotal,calcAmount.doubleValue());
 
         }catch (Exception e){
-            throw new RuntimeException("Erro ao salvar checkout");
+            throw new InternalServerException("Erro ao salvar produto");
         }
     }
 
@@ -119,10 +116,13 @@ public class CheckoutServiceImp implements CheckoutService {
         var car = cartItemService.getItemById(idCart, checkout.getId(), product);
         double sessionAmount = checkout.getTotalAmount() - (product.getPrice() * car.getQuantity());
         checkout.setTotalAmount(sessionAmount);
-        cartItemService.deleteCartItem(car);
-        sessionRepository.save(checkout);
 
-
+        try {
+            cartItemService.deleteCartItem(car);
+            sessionRepository.save(checkout);
+        }catch (Exception e){
+            throw new InternalServerException("Erro ao remover produto");
+        }
 
     }
 
