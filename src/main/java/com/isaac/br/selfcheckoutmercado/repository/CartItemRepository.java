@@ -13,4 +13,5 @@ public interface CartItemRepository extends CrudRepository<CartItem, Long> {
 
     Optional<CartItem> findByIdAndSessionIdAndProductId(Long id, Long sessionId, Product productId);
     List<CartItem> findBySessionId(long sessionId);
+    void deleteAllBySessionId(long sessionId);
 }
