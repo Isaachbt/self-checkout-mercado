@@ -4,6 +4,7 @@ import com.isaac.br.selfcheckoutmercado.exceptions.NotFoundException;
 import com.isaac.br.selfcheckoutmercado.model.Product;
 import com.isaac.br.selfcheckoutmercado.repository.ProductRepository;
 import com.isaac.br.selfcheckoutmercado.service.ProductService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -31,5 +32,11 @@ public class ProductServiceImp implements ProductService {
             throw new NotFoundException("Item not found.");
         }
         return product.get();
+    }
+
+    @Transactional
+    @Override
+    public void saveProduct(Product product) {
+        productRepository.save(product);
     }
 }

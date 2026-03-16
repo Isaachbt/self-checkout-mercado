@@ -6,4 +6,5 @@ public interface ProductService {
 
     Product getBarCode(String barCode);
     Product getProduct(long id);
+    void saveProduct(Product product);
 }
