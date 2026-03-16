@@ -6,6 +6,7 @@ import com.isaac.br.selfcheckoutmercado.model.CartItem;
 import com.isaac.br.selfcheckoutmercado.model.Product;
 import com.isaac.br.selfcheckoutmercado.repository.CartItemRepository;
 import com.isaac.br.selfcheckoutmercado.service.CartItemService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,7 @@ public class CartItemServiceImp implements CartItemService {
         return List.of();
     }
 
+    @Transactional
     @Override
     public void saveCartItem(CartItem cartItem) {
         try {

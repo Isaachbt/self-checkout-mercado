@@ -4,6 +4,7 @@ import com.isaac.br.selfcheckoutmercado.config.AuthFacade;
 import com.isaac.br.selfcheckoutmercado.dto.CartItemDTO;
 import com.isaac.br.selfcheckoutmercado.dto.CheckoutResponseDTO;
 import com.isaac.br.selfcheckoutmercado.dto.ResponseCartItem;
+import com.isaac.br.selfcheckoutmercado.enums.PriceType;
 import com.isaac.br.selfcheckoutmercado.enums.Status;
 import com.isaac.br.selfcheckoutmercado.exceptions.*;
 import com.isaac.br.selfcheckoutmercado.model.CartItem;
@@ -13,6 +14,7 @@ import com.isaac.br.selfcheckoutmercado.repository.SessionRepository;
 import com.isaac.br.selfcheckoutmercado.service.CartItemService;
 import com.isaac.br.selfcheckoutmercado.service.CheckoutService;
 import com.isaac.br.selfcheckoutmercado.service.ProductService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -71,6 +73,7 @@ public class CheckoutServiceImp implements CheckoutService {
         }
     }
 
+    @Transactional
     @Override
     public ResponseCartItem addItemToCart(Long idSession, CartItemDTO dto) {
         var checkoutSession = getSessionById(idSession);
@@ -78,17 +81,21 @@ public class CheckoutServiceImp implements CheckoutService {
         CartItem cartItem = new CartItem();
         double subTotal;
 
-        if (dto.weight() != 0){
+        if (product.getPriceType() == PriceType.WEIGHT){
+            if (dto.weight() == 0) {
+                throw new QuantityInvalidException("Informe o peso para este produto");
+            }
             BigDecimal pesoKg = new BigDecimal(dto.weight()).divide(new BigDecimal(1000));
             BigDecimal total = pesoKg.multiply(BigDecimal.valueOf(product.getPrice()));
-            cartItem.setWeight(pesoKg.doubleValue());
-            subTotal = total.doubleValue();
+                cartItem.setWeight(pesoKg.doubleValue());
+                product.setQuantity((int) (product.getQuantity() - dto.weight()));
+                subTotal = total.doubleValue();
         }else{
-
             if (dto.quantity() == 0){
             throw new QuantityInvalidException("Quantity invalid");
             }
 
+            product.setQuantity(product.getQuantity() - dto.quantity());
             subTotal = dto.quantity() * product.getPrice();
             cartItem.setQuantity(dto.quantity());
         }
@@ -102,6 +109,7 @@ public class CheckoutServiceImp implements CheckoutService {
         try {
             sessionRepository.save(checkoutSession);
             cartItemService.saveCartItem(cartItem);
+            productService.saveProduct(product);
             return new ResponseCartItem(product.getId(),product.getName(), subTotal,calcAmount.doubleValue());
 
         }catch (Exception e){
@@ -109,16 +117,27 @@ public class CheckoutServiceImp implements CheckoutService {
         }
     }
 
+    @Transactional
     @Override
     public void removeItemFromCart(long idCart,long idSession,long productId) {
         Product product = productService.getProduct(productId);
         var checkout = getSessionById(idSession);
         var car = cartItemService.getItemById(idCart, checkout.getId(), product);
-        double sessionAmount = checkout.getTotalAmount() - (product.getPrice() * car.getQuantity());
-        checkout.setTotalAmount(sessionAmount);
+
+        if (product.getPriceType() == PriceType.WEIGHT){
+            double sessionAmountGrams = checkout.getTotalAmount() - (product.getPrice() * car.getWeight());
+            checkout.setTotalAmount(sessionAmountGrams);
+            int weightInGrams = (int) (car.getWeight() * 1000);
+            product.setQuantity(product.getQuantity() + weightInGrams);
+        }else{
+            double sessionAmountQuanti = checkout.getTotalAmount() - (product.getPrice() * car.getQuantity());
+            checkout.setTotalAmount(sessionAmountQuanti);
+            product.setQuantity(product.getQuantity() + car.getQuantity());
+        }
 
         try {
             cartItemService.deleteCartItem(car);
+            productService.saveProduct(product);
             sessionRepository.save(checkout);
         }catch (Exception e){
             throw new InternalServerException("Erro ao remover produto");

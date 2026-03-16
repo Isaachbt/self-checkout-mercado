@@ -23,6 +23,7 @@ public class Product {
     private String name;
     @Column(name = "bar_code", nullable = false, unique = true)
     private String barCode;
+    private int quantity;
     @Column(nullable = false)
     private double price;
     @Column(nullable = false)
