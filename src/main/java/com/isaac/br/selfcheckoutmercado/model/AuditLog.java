@@ -1,5 +1,6 @@
 package com.isaac.br.selfcheckoutmercado.model;
 
+import com.isaac.br.selfcheckoutmercado.enums.LogAudi;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,6 +18,21 @@ public class AuditLog {
     private UUID id;
     private UUID employeeId;
     private UUID terminalId;
-    private String action;
-    private LocalDateTime timestamp;
+    @Enumerated(EnumType.STRING)
+    private LogAudi action;
+    private LocalDateTime openedAt;
+    private LocalDateTime closedAt;
+
+    public AuditLog() {
+    }
+
+    public AuditLog(UUID employeeId, UUID terminalId, LogAudi action, LocalDateTime opened_at, LocalDateTime closed_at) {
+        this.employeeId = employeeId;
+        this.terminalId = terminalId;
+        this.action = action;
+        this.openedAt = opened_at;
+        this.closedAt = closed_at;
+    }
+
+
 }
