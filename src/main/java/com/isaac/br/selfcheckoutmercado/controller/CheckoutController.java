@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("api/")
 public class CheckoutController {
@@ -21,9 +23,10 @@ public class CheckoutController {
         return ResponseEntity.ok(checkoutService.createCheckout());
     }
 
-    @PostMapping("checkout/sessions/{id}/cancel")
-    public ResponseEntity<Object> cancelSession(@PathVariable("id") long checkoutId){
-        checkoutService.cancelCheckout(checkoutId);
+    @PostMapping("checkout/sessions/{id}/{logId}/cancel")
+    public ResponseEntity<Object> cancelSession(@PathVariable("id") long checkoutId,
+                                                @PathVariable("logId") UUID logId){
+        checkoutService.cancelCheckout(checkoutId,logId);
         return ResponseEntity.status(HttpStatus.OK).body("Volte sempre.");
     }
 
