@@ -2,8 +2,10 @@ package com.isaac.br.selfcheckoutmercado.service.imp;
 
 import com.isaac.br.selfcheckoutmercado.dto.LoginDTO;
 import com.isaac.br.selfcheckoutmercado.dto.LoginResponseDTO;
+import com.isaac.br.selfcheckoutmercado.enums.LogAudi;
 import com.isaac.br.selfcheckoutmercado.exceptions.NegadoException;
 import com.isaac.br.selfcheckoutmercado.exceptions.NotFoundException;
+import com.isaac.br.selfcheckoutmercado.model.AuditLog;
 import com.isaac.br.selfcheckoutmercado.model.Employee;
 import com.isaac.br.selfcheckoutmercado.model.Terminal;
 import com.isaac.br.selfcheckoutmercado.repository.EmployeeRepository;
@@ -68,7 +70,13 @@ public class AuthService {
                 .orElseThrow(() -> new NotFoundException("Terminal not found"));
 
         String token = jwtService.generateToken(employee,terminal.getId());
-        audiService.log(employee.getId(),terminal.getId(),"LOGIN");
+        AuditLog log = new AuditLog
+                (employee.getId(),
+                 terminal.getId(),
+                 LogAudi.LOGIN,
+                 LocalDateTime.now(),
+                 null);
+        audiService.log(log);
         return new LoginResponseDTO(token);
 
     }
