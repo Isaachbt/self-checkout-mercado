@@ -4,9 +4,11 @@ import com.isaac.br.selfcheckoutmercado.config.AuthFacade;
 import com.isaac.br.selfcheckoutmercado.dto.CartItemDTO;
 import com.isaac.br.selfcheckoutmercado.dto.CheckoutResponseDTO;
 import com.isaac.br.selfcheckoutmercado.dto.ResponseCartItem;
+import com.isaac.br.selfcheckoutmercado.enums.LogAudi;
 import com.isaac.br.selfcheckoutmercado.enums.PriceType;
 import com.isaac.br.selfcheckoutmercado.enums.Status;
 import com.isaac.br.selfcheckoutmercado.exceptions.*;
+import com.isaac.br.selfcheckoutmercado.model.AuditLog;
 import com.isaac.br.selfcheckoutmercado.model.CartItem;
 import com.isaac.br.selfcheckoutmercado.model.CheckoutSession;
 import com.isaac.br.selfcheckoutmercado.model.Product;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 public class CheckoutServiceImp implements CheckoutService {
@@ -39,17 +42,28 @@ public class CheckoutServiceImp implements CheckoutService {
     @Autowired
     private AuthFacade authFacade;
 
+    @Transactional
     @Override
     public CheckoutResponseDTO createCheckout() {
 
         var checkout = new CheckoutSession(Status.OPEN, LocalDateTime.now(),0.0);
         try {
             CheckoutSession session = sessionRepository.save(checkout);
+
+            AuditLog log = new AuditLog
+                    (authFacade.getEmployeeId(),
+                     authFacade.getTerminalId(),
+                     LogAudi.OPEN,
+                     LocalDateTime.now(),
+                     null);
+            UUID idLog = audiService.log(log);
+
             return new CheckoutResponseDTO(
                     session.getId(),
                     session.getStatus(),
                     session.getCreatAt(),
-                    session.getTotalAmount());
+                    session.getTotalAmount(),
+                    idLog);
 
         }catch (Exception e){
             throw new InternalServerException("Erro ao iniciar checkout");
@@ -57,7 +71,7 @@ public class CheckoutServiceImp implements CheckoutService {
     }
 
     @Override
-    public void cancelCheckout(long checkoutId) {
+    public void cancelCheckout(long checkoutId,UUID logId) {
 
         if (!cartItemService.findBySessionId(checkoutId).isEmpty()) {
             throw new CartAllItemsException("Impossivel cancelar a checkout");
@@ -65,9 +79,9 @@ public class CheckoutServiceImp implements CheckoutService {
 
         CheckoutSession session = getSessionById(checkoutId);
         session.setStatus(Status.CANCELLED);
+        sessionRepository.delete(session);
+        audiService.closedLog(logId);
         try {
-            sessionRepository.delete(session);
-            audiService.log(authFacade.getEmployeeId(),authFacade.getTerminalId(),"CANCELLED");
         }catch (Exception e){
             throw new InternalServerException("Erro ao deletar checkout");
         }
