@@ -21,7 +21,7 @@ public class JwtService {
                 .claim("role", employee.getRole())
                 .claim("terminal", terminalId.toString())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 900000))
+                .setExpiration(new Date(System.currentTimeMillis() + 36000000))
                 .signWith(Keys.hmacShaKeyFor(SECRET.getBytes()))
                 .compact();
     }
