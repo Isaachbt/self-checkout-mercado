@@ -1,5 +1,7 @@
 package com.isaac.br.selfcheckoutmercado.service.imp;
 
+import com.isaac.br.selfcheckoutmercado.enums.LogAudi;
+import com.isaac.br.selfcheckoutmercado.exceptions.NegadoException;
 import com.isaac.br.selfcheckoutmercado.model.AuditLog;
 import com.isaac.br.selfcheckoutmercado.repository.AudiRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,12 +16,17 @@ public class AudiService {
     @Autowired
     private AudiRepository audiRepository;
 
-    public void log(UUID employeeId, UUID terminalId, String action) {
-        AuditLog log = new AuditLog();
-        log.setEmployeeId(employeeId);
-        log.setTerminalId(terminalId);
-        log.setAction(action);
-        log.setTimestamp(LocalDateTime.now());
+
+    public UUID log(AuditLog audi) {
+        audiRepository.save(audi);
+        return audi.getId();
+    }
+
+    public void closedLog(UUID logId) {
+        AuditLog log = audiRepository.findById(logId)
+                .orElseThrow(() -> new NegadoException("Log não encontrado"));
+        log.setAction(LogAudi.FINISHED);
+        log.setClosedAt(LocalDateTime.now());
         audiRepository.save(log);
     }
 }
