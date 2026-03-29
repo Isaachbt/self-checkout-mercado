@@ -15,7 +15,7 @@ public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private long sessionId;
     @Column(nullable = false)
     private double amount;
